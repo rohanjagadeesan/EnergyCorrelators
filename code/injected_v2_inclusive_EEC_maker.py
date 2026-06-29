@@ -280,7 +280,7 @@ def main():
     out_dir = os.path.join(args.outdir, f"injected_v2_{v2_tag}")
     os.makedirs(out_dir, exist_ok=True)
 
-    full_output_path = os.path.join(args.outdir, f"EEC_non_binned_Output_Batch{args.batchnum}.root")
+    full_output_path = os.path.join(out_dir, f"EEC_non_binned_Output_Batch{args.batchnum}.root")
     
     print(f"Opening output file to save all results: {full_output_path}")
     out_file = ROOT.TFile(full_output_path, "RECREATE")
