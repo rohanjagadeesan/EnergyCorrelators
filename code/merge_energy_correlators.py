@@ -78,7 +78,8 @@ def main():
 
             # add the EECs
             wta_eec = file.Get(f"hEEC_WTA_{bin_name}")
-            merged_wta_histograms[bin_key]['eec'].Add(wta_eec)
+            if wta_eec: # check it exists
+                merged_wta_histograms[bin_key]['eec'].Add(wta_eec)
 
             std_eec = file.Get(f"hEEC_STD_{bin_name}")
             merged_std_histograms[bin_key]['eec'].Add(std_eec)

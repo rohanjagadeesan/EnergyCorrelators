@@ -301,7 +301,7 @@ def main():
                     h_EEC_std = std_histograms[bin_key]['eec']
                     h_EEC_std.FillN(std_n_sig_pairs,  std_dRL, std_weights)
 
-                    del std_pairs, std_p1, std_p2, std_deta, std_dphi, std_weights
+                    del std_pairs, std_p1, std_p2, std_w1, std_w2, std_deta, std_dphi, std_weights
                     gc.collect()
 
                     # Fill in the energy profile:
