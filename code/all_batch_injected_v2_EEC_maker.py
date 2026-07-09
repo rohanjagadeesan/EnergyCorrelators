@@ -272,7 +272,8 @@ def main():
             # 2. STD signal (EEC and profile)
             std_n_sig_pairs = 0
             if num_jets_dict[bin_key]["std"] > 0:
-                std_pairs = ak.combinations(binned_std_parts, 2, axis=1)
+
+                
 
                 # 3. Compute per-particle relative phi and flow weights for STD (for EEC & profile)
                 std_parts_phi_wrt_jet = binned_std_parts.phi - binned_std_axes.phi
@@ -280,6 +281,18 @@ def main():
                 
                 # Combine the single particle flow weights into unique pairs matching std_pairs
                 std_weight_pairs = ak.combinations(std_parts_flow_weight, 2, axis=1)
+
+                # new
+                std_parts_px_weighted = binned_std_parts.pt * np.cos(binned_std_parts.phi) * std_parts_flow_weight
+                std_parts_py_weighted = binned_std_parts.pt * np.sin(binned_std_parts.phi) * std_parts_flow_weight
+                std_jet_px_weighted = ak.sum(std_parts_px_weighted, axis=1)
+                std_jet_py_weighted = ak.sum(std_parts_py_weighted, axis=1)
+                
+                std_jet_pt_weighted_sq = std_jet_px_weighted**2 + std_jet_py_weighted**2
+                std_jet_pt_weighted = np.sqrt(std_jet_pt_weighted_sq)
+                #--
+                
+                std_pairs = ak.combinations(binned_std_parts, 2, axis=1)
                 
                 if ak.sum(ak.num(std_pairs)) > 0:
                     std_p1, std_p2 = ak.unzip(std_pairs)
@@ -289,12 +302,12 @@ def main():
                     std_dphi = ak.to_numpy(ak.flatten(np.arccos(np.cos(std_p1.phi - std_p2.phi)), axis=None)).astype(np.float64)
                     std_dRL = np.sqrt( np.square(std_deta) + np.square(std_dphi) )
                     
-                    std_jet_pt_sq = binned_std_axes.pt ** 2
-                    std_energies = std_p1.pt * std_p2.pt
-                    std_normalised_energies = std_energies / std_jet_pt_sq
-
-                    std_total_weights = std_normalised_energies * std_w1 * std_w2 #v2 injection
+                    # new normalisation:
+                    # Calculate the numerator pair energy product with flow weights
+                    std_numerator_weights = (std_p1.pt * std_w1) * (std_p2.pt * std_w2)
                     
+                    # Divide by the squared WEIGHTED vector jet pT denominator
+                    std_total_weights = std_numerator_weights / std_jet_pt_weighted_sq
                     std_weights = ak.to_numpy(ak.flatten(std_total_weights, axis=None)).astype(np.float64)
                     std_n_sig_pairs = len(std_deta)
 

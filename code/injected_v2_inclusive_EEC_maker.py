@@ -228,6 +228,13 @@ def main():
         std_n_sig_pairs = 0
         if num_jets_dict["std"] > 0:
 
+            
+
+            # 3. Compute per-particle relative phi and flow weights for STD (for EEC & profile)
+            std_parts_phi_wrt_jet = binned_std_parts.phi - binned_std_axes.phi
+            std_parts_flow_weight = 1.0 + 2.0 * v2 * np.cos(2.0 * (std_parts_phi_wrt_jet - psi_vals))
+
+            # new (for weighted norm)
             std_parts_px_weighted = binned_std_parts.pt * np.cos(binned_std_parts.phi) * std_parts_flow_weight
             std_parts_py_weighted = binned_std_parts.pt * np.sin(binned_std_parts.phi) * std_parts_flow_weight
             std_jet_px_weighted = ak.sum(std_parts_px_weighted, axis=1)
@@ -235,12 +242,9 @@ def main():
             
             std_jet_pt_weighted_sq = std_jet_px_weighted**2 + std_jet_py_weighted**2
             std_jet_pt_weighted = np.sqrt(std_jet_pt_weighted_sq)
+            #--
 
             std_pairs = ak.combinations(binned_std_parts, 2, axis=1)
-
-            # 3. Compute per-particle relative phi and flow weights for STD (for EEC & profile)
-            std_parts_phi_wrt_jet = binned_std_parts.phi - binned_std_axes.phi
-            std_parts_flow_weight = 1.0 + 2.0 * v2 * np.cos(2.0 * (std_parts_phi_wrt_jet - psi_vals))
             
             # Combine the single particle flow weights into unique pairs matching std_pairs
             std_weight_pairs = ak.combinations(std_parts_flow_weight, 2, axis=1)
@@ -270,8 +274,6 @@ def main():
                 # Divide by the squared WEIGHTED vector jet pT denominator
                 std_total_weights = std_numerator_weights / std_jet_pt_weighted_sq
                 std_weights = ak.to_numpy(ak.flatten(std_total_weights, axis=None)).astype(np.float64)
-                std_n_sig_pairs = len(std_deta)
-                
                 std_n_sig_pairs = len(std_deta)
 
                 h_EEC_std = std_histograms['eec']
