@@ -201,6 +201,9 @@ def main():
         num_jets_in_chunk = len(binned_std_axes)
         psi_vals = np.random.uniform(-np.pi, np.pi, size=num_jets_in_chunk)
 
+        # Vector sum for STD weighted jet pT
+            
+
         # --- FILL SIGNAL ---
         # 1. WTA (only profile, no EEC)
         if num_jets_dict["wta"] > 0:
@@ -224,6 +227,15 @@ def main():
         # 2. STD signal
         std_n_sig_pairs = 0
         if num_jets_dict["std"] > 0:
+
+            std_parts_px_weighted = binned_std_parts.pt * np.cos(binned_std_parts.phi) * std_parts_flow_weight
+            std_parts_py_weighted = binned_std_parts.pt * np.sin(binned_std_parts.phi) * std_parts_flow_weight
+            std_jet_px_weighted = ak.sum(std_parts_px_weighted, axis=1)
+            std_jet_py_weighted = ak.sum(std_parts_py_weighted, axis=1)
+            
+            std_jet_pt_weighted_sq = std_jet_px_weighted**2 + std_jet_py_weighted**2
+            std_jet_pt_weighted = np.sqrt(std_jet_pt_weighted_sq)
+
             std_pairs = ak.combinations(binned_std_parts, 2, axis=1)
 
             # 3. Compute per-particle relative phi and flow weights for STD (for EEC & profile)
@@ -242,13 +254,24 @@ def main():
                 std_dphi = ak.to_numpy(ak.flatten(np.arccos(np.cos(std_p1.phi - std_p2.phi)), axis=None)).astype(np.float64)
                 std_dRL = np.sqrt( np.square(std_deta) + np.square(std_dphi) )
                 
-                std_jet_pt_sq = binned_std_axes.pt ** 2
-                std_energies = std_p1.pt * std_p2.pt
-                std_normalised_energies = std_energies / std_jet_pt_sq
+                #old normalisation:
+                #std_jet_pt_sq = binned_std_axes.pt ** 2
+                #std_energies = std_p1.pt * std_p2.pt
+                #std_normalised_energies = std_energies / std_jet_pt_sq
+                #std_total_weights = std_normalised_energies * std_w1 * std_w2
+                #std_weights = ak.to_numpy(ak.flatten(std_total_weights, axis=None)).astype(np.float64)
 
-                std_total_weights = std_normalised_energies * std_w1 * std_w2
-
+                
+                # new normalisation:
+                
+                # Calculate the numerator pair energy product with flow weights
+                std_numerator_weights = (std_p1.pt * std_w1) * (std_p2.pt * std_w2)
+                
+                # Divide by the squared WEIGHTED vector jet pT denominator
+                std_total_weights = std_numerator_weights / std_jet_pt_weighted_sq
                 std_weights = ak.to_numpy(ak.flatten(std_total_weights, axis=None)).astype(np.float64)
+                std_n_sig_pairs = len(std_deta)
+                
                 std_n_sig_pairs = len(std_deta)
 
                 h_EEC_std = std_histograms['eec']
@@ -263,8 +286,8 @@ def main():
                 
                 std_dRL_profile = np.sqrt(np.square(std_deta_profile) + np.square(std_dphi_profile))
                 std_dRL_profile_flat = ak.to_numpy(ak.flatten(std_dRL_profile, axis=None)).astype(np.float64)
-                std_profile_energies = binned_std_parts.pt / binned_std_axes.pt
-                std_weights_profile = ak.to_numpy(ak.flatten(std_profile_energies, axis=None)).astype(np.float64)
+                
+                std_weights_profile = ak.to_numpy(ak.flatten((binned_std_parts.pt * std_parts_flow_weight) / std_jet_pt_weighted, axis=None)).astype(np.float64)
                 
                 if len(std_dRL_profile_flat) > 0:
                     h_profile_std = std_histograms['profile'] #fill the right hist
