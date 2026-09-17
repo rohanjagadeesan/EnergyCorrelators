@@ -1,0 +1,9 @@
+output/ratios/high_Nch/old_norm
+output/ratios/inclusive/old_norm
+output/inclusive_nonbinned/old_statistics
+output/0mb_nch60/old
+output/0mb_inclusive/old_injected
+
+
+*.DS_Store
+
